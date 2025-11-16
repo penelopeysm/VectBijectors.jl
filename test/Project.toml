@@ -1,5 +1,4 @@
 [deps]
-Chairmarks = "0ca39b1e-fe0b-4e98-acfc-b1656634c4de"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 VectBijectors = "8f4f62c7-8ad6-4a10-ba5f-dd81de6324a2"

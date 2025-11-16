@@ -1,6 +1,5 @@
 module VBUnivariateTests
 
-using Chairmarks
 using Distributions
 using VectBijectors
 using Test
