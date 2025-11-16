@@ -10,6 +10,7 @@ function test_all(d::Distribution)
     @info "Testing $(_name(d))"
     @testset "$(_name(d))" begin
         VectorBijectorsTest.test_roundtrip(d)
+        VectorBijectorsTest.test_roundtrip_inverse(d)
         VectorBijectorsTest.test_type_stability(d)
         VectorBijectorsTest.test_vec_lengths(d)
         VectorBijectorsTest.test_allocations(d)
@@ -33,6 +34,29 @@ function test_roundtrip(d::Distribution)
             ffwd = to_linked_vec(d)
             frvs = from_linked_vec(d)
             @test x ≈ frvs(ffwd(x))
+        end
+    end
+end
+
+function test_roundtrip_inverse(d::Distribution)
+    # TODO: Use smarter test generation e.g. with property-based testing or at least
+    # generate random parameters across the support
+    @testset "roundtrip inverse: $(_name(d))" begin
+        len = vec_length(d)
+        for _ in 1:100
+            y = randn(len)
+            frvs = from_vec(d)
+            ffwd = to_vec(d)
+            @test y ≈ ffwd(frvs(y))
+        end
+    end
+    @testset "roundtrip inverse (linked): $(_name(d))" begin
+        len = linked_vec_length(d)
+        for _ in 1:100
+            y = randn(len)
+            ffwd = to_linked_vec(d)
+            frvs = from_linked_vec(d)
+            @test y ≈ ffwd(frvs(y))
         end
     end
 end
