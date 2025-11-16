@@ -67,21 +67,9 @@ dists = [
 ]
 
 @testset "Univariate distributions" begin
-    @testset "$(typeof(d))" for d in dists
+    for d in dists
         @info "Univariate: $(typeof(d))"
-
-        VectBijectors.TestUtils.test_roundtrip(d)
-        VectBijectors.TestUtils.test_type_stability(d)
-
-        @testset "no allocations on from_vec" begin
-            x = rand(d)
-            yvec = to_linked_vec(d)(x)
-            bmark = median(@be from_linked_vec($d)($yvec))
-            @test bmark.allocs == 0
-            yvec = to_vec(d)(x)
-            bmark = median(@be from_vec($d)($yvec))
-            @test bmark.allocs == 0
-        end
+        VectBijectors.TestUtils.test_all(d)
     end
 end
 
