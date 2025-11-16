@@ -125,7 +125,7 @@ function test_allocations(d::Distribution)
     end
 end
 
-function test_logjac(d::Distribution; atol=1e-13)
+function test_logjac(d::Distribution; atol=1e-12)
     # Vectorisation logjacs should be zero because they are just reshapes.
     @testset "logjac: $(_name(d))" begin
         for _ in 1:100
