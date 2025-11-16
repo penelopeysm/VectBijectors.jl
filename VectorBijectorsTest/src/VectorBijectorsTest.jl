@@ -125,7 +125,7 @@ function test_allocations(d::Distribution)
     end
 end
 
-function test_logjac(d::Distribution)
+function test_logjac(d::Distribution; atol=1e-13)
     # Vectorisation logjacs should be zero because they are just reshapes.
     @testset "logjac: $(_name(d))" begin
         for _ in 1:100
@@ -150,8 +150,13 @@ function test_logjac(d::Distribution)
             ffwd = to_linked_vec(d) ∘ from_vec(d)
             vbt_logjac = last(with_logabsdet_jacobian(ffwd, xvec))
             ad_logjac = first(logabsdet(DI.jacobian(ffwd, ref_adtype, xvec)))
-            # atol might need to be adjusted depending on random seeds etc
-            @test vbt_logjac ≈ ad_logjac atol=1e-11
+            @test vbt_logjac ≈ ad_logjac atol=atol
+
+            yvec = to_linked_vec(d)(rand(d))
+            frvs = to_vec(d) ∘ from_linked_vec(d)
+            vbt_logjac = last(with_logabsdet_jacobian(frvs, yvec))
+            ad_logjac = first(logabsdet(DI.jacobian(frvs, ref_adtype, yvec)))
+            @test vbt_logjac ≈ ad_logjac atol=atol
         end
     end
 end
