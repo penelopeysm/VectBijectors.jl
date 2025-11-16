@@ -8,20 +8,31 @@ using LinearAlgebra: logabsdet
 import DifferentiationInterface as DI
 import ForwardDiff
 
-# TODO: Would like to use FiniteDifferences, but very easy to run into issues with https://juliadiff.org/FiniteDifferences.jl/latest/#Dealing-with-Singularities
+# Would like to use FiniteDifferences, but very easy to run into issues with
+# https://juliadiff.org/FiniteDifferences.jl/latest/#Dealing-with-Singularities
 const ref_adtype = AutoForwardDiff()
+
+const default_adtypes = [
+    AutoReverseDiff(),
+    AutoReverseDiff(; compile=true),
+    AutoMooncake(),
+    AutoMooncakeForward(),
+]
 
 _name(d::Distribution) = nameof(typeof(d))
 
-function test_all(d::Distribution)
+function test_all(d::Distribution; adtypes=default_adtypes, ad_atol=1e-12, test_allocs=true)
     @info "Testing $(_name(d))"
     @testset "$(_name(d))" begin
         VectorBijectorsTest.test_roundtrip(d)
         VectorBijectorsTest.test_roundtrip_inverse(d)
         VectorBijectorsTest.test_type_stability(d)
         VectorBijectorsTest.test_vec_lengths(d)
-        VectorBijectorsTest.test_allocations(d)
-        VectorBijectorsTest.test_logjac(d)
+        if test_allocs
+            VectorBijectorsTest.test_allocations(d)
+        end
+        VectorBijectorsTest.test_logjac(d; atol=ad_atol)
+        VectorBijectorsTest.test_ad(d, adtypes; atol=ad_atol)
     end
 end
 
@@ -150,13 +161,36 @@ function test_logjac(d::Distribution; atol=1e-12)
             ffwd = to_linked_vec(d) ∘ from_vec(d)
             vbt_logjac = last(with_logabsdet_jacobian(ffwd, xvec))
             ad_logjac = first(logabsdet(DI.jacobian(ffwd, ref_adtype, xvec)))
-            @test vbt_logjac ≈ ad_logjac atol=atol
+            @test vbt_logjac ≈ ad_logjac atol = atol
 
             yvec = to_linked_vec(d)(rand(d))
             frvs = to_vec(d) ∘ from_linked_vec(d)
             vbt_logjac = last(with_logabsdet_jacobian(frvs, yvec))
             ad_logjac = first(logabsdet(DI.jacobian(frvs, ref_adtype, yvec)))
-            @test vbt_logjac ≈ ad_logjac atol=atol
+            @test vbt_logjac ≈ ad_logjac atol = atol
+        end
+    end
+end
+
+function test_ad(d::Distribution, adtypes::Vector{<:AbstractADType}; atol=1e-12)
+    # Test that AD backends can differentiate the conversions to and from vector
+    # and linked vector forms.
+    @testset "AD forward: $(_name(d))" begin
+        xvec = to_vec(d)(rand(d))
+        ffwd = to_linked_vec(d) ∘ from_vec(d)
+        ref_jac = DI.jacobian(ffwd, ref_adtype, xvec)
+        @testset "$adtype" for adtype in adtypes
+            ad_jac = DI.jacobian(ffwd, adtype, xvec)
+            @test ref_jac ≈ ad_jac atol = atol
+        end
+    end
+    @testset "AD reverse: $(_name(d))" begin
+        yvec = to_linked_vec(d)(rand(d))
+        frvs = to_vec(d) ∘ from_linked_vec(d)
+        ref_jac = DI.jacobian(frvs, ref_adtype, yvec)
+        @testset "$adtype" for adtype in adtypes
+            ad_jac = DI.jacobian(frvs, adtype, yvec)
+            @test ref_jac ≈ ad_jac atol = atol
         end
     end
 end

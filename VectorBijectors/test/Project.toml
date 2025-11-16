@@ -1,5 +1,8 @@
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 VectorBijectors = "8f4f62c7-8ad6-4a10-ba5f-dd81de6324a2"

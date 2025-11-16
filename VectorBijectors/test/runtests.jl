@@ -1,4 +1,7 @@
 using Test
+import ForwardDiff
+import ReverseDiff
+import Mooncake
 
 # VBT isn't released yet, so we need to manually develop
 import Pkg
