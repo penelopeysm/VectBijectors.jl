@@ -9,4 +9,5 @@ Pkg.develop(; path = joinpath(@__DIR__, "..", "..", "VectorBijectorsTest"))
 
 @testset verbose = true "VectorBijectors.jl" begin
     include("univariate.jl")
+    include("multivariate.jl")
 end

@@ -217,6 +217,18 @@ function test_logjac(d::Distribution; atol = 1e-12)
 end
 
 function test_ad(d::Distribution, adtypes::Vector{<:AbstractADType}; atol = 1e-12)
+    # If `d` is a discrete multivariate distribution, Mooncake refuses to differentiate
+    # through the transforms (which are just identity transforms). Arguably, the other AD
+    # backends probably should do the same, but they do actually return the right
+    # 'gradients' so we can test them.
+    adtypes = if d isa Distributions.DiscreteMultivariateDistribution
+        filter(adtypes) do adtype
+            !(adtype isa AutoMooncake || adtype isa AutoMooncakeForward)
+        end
+    else
+        adtypes
+    end
+    #
     # Test that AD backends can differentiate the conversions to and from vector
     # and linked vector forms.
     @testset "AD forward: $(_name(d))" begin
