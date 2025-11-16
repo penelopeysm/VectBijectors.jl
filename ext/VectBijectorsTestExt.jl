@@ -7,6 +7,7 @@ using Distributions
 _name(d::Distribution) = nameof(typeof(d))
 
 function VectBijectors.TestUtils.test_all(d::Distribution)
+    @info "Testing $(_name(d))"
     @testset "$(_name(d))" begin
         VectBijectors.TestUtils.test_roundtrip(d)
         VectBijectors.TestUtils.test_type_stability(d)

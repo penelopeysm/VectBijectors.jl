@@ -65,9 +65,8 @@ dists = [
     truncated(Normal(); lower=0) # trunc
 ]
 
-@testset "Univariate distributions" begin
+@testset "Univariates" begin
     for d in dists
-        @info "Univariate: $(typeof(d))"
         VectBijectors.TestUtils.test_all(d)
     end
 end
