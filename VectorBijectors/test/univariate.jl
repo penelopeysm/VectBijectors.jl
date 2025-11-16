@@ -62,12 +62,12 @@ dists = [
     Uniform(0, 1), # trunc
     VonMises(0.5), # trunc
     Weibull(0.5, 1), # pos
-    truncated(Normal(); lower=0.0), # trunc
-    truncated(Normal(); upper=0.0), # trunc
-    truncated(Normal(); lower=0.0, upper=1.0), # trunc
-    censored(Normal(); lower=0.0), # trunc
-    censored(Normal(); upper=0.0), # trunc
-    censored(Normal(); lower=0.0, upper=1.0), # trunc
+    truncated(Normal(); lower = 0.0), # trunc
+    truncated(Normal(); upper = 0.0), # trunc
+    truncated(Normal(); lower = 0.0, upper = 1.0), # trunc
+    censored(Normal(); lower = 0.0), # trunc
+    censored(Normal(); upper = 0.0), # trunc
+    censored(Normal(); lower = 0.0, upper = 1.0), # trunc
 ]
 
 @testset "Univariates" begin

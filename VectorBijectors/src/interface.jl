@@ -44,3 +44,17 @@ Returns the length of the unconstrained vector representation of a sample from `
 sample.
 """
 function linked_vec_length end
+
+for f in (:from_vec, :to_vec, :from_linked_vec, :to_linked_vec)
+    @eval begin
+        function with_logabsdet_jacobian(::typeof(VectorBijectors.$f), ::Any)
+            error(
+                "`" *
+                string($f) *
+                "` is not a transform itself. Perhaps you meant to call `with_logabsdet_jacobian(" *
+                string($f) *
+                "(dist), x)`?",
+            )
+        end
+    end
+end

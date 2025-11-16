@@ -13,7 +13,7 @@ for dist_type in [
     D.PGeneralizedGaussian,
     D.SkewedExponentialPower,
     D.SkewNormal,
-    D.TDist
+    D.TDist,
 ]
     @eval begin
         VectorBijectors.from_linked_vec(::$dist_type) = Only()

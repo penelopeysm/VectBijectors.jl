@@ -14,7 +14,7 @@ const ref_adtype = AutoForwardDiff()
 
 const default_adtypes = [
     AutoReverseDiff(),
-    AutoReverseDiff(; compile=true),
+    AutoReverseDiff(; compile = true),
     AutoMooncake(),
     AutoMooncakeForward(),
 ]
@@ -22,7 +22,8 @@ const default_adtypes = [
 # Pretty-printing distributions. Otherwise things like MvNormal are super ugly.
 _name(d::Distribution) = nameof(typeof(d))
 _name(d::Distributions.Censored) = "censored $(_name(d.uncensored)) [$(d.lower),$(d.upper)]"
-_name(d::Distributions.Truncated) = "truncated $(_name(d.untruncated)) [$(d.lower),$(d.upper)]"
+_name(d::Distributions.Truncated) =
+    "truncated $(_name(d.untruncated)) [$(d.lower),$(d.upper)]"
 
 # AD will give nonsense results at the limits of censored distributions (since the gradient
 # is not well-defined), so we avoid generating samples that are exactly at the limits.
@@ -37,7 +38,12 @@ _rand_safe_ad(d::Distributions.Censored) = begin
     end
 end
 
-function test_all(d::Distribution; adtypes=default_adtypes, ad_atol=1e-12, test_allocs=true)
+function test_all(
+    d::Distribution;
+    adtypes = default_adtypes,
+    ad_atol = 1e-12,
+    test_allocs = true,
+)
     @info "Testing $(_name(d))"
     @testset "$(_name(d))" begin
         VectorBijectorsTest.test_roundtrip(d)
@@ -47,8 +53,8 @@ function test_all(d::Distribution; adtypes=default_adtypes, ad_atol=1e-12, test_
         if test_allocs
             VectorBijectorsTest.test_allocations(d)
         end
-        VectorBijectorsTest.test_logjac(d; atol=ad_atol)
-        VectorBijectorsTest.test_ad(d, adtypes; atol=ad_atol)
+        VectorBijectorsTest.test_logjac(d; atol = ad_atol)
+        VectorBijectorsTest.test_ad(d, adtypes; atol = ad_atol)
     end
 end
 
@@ -56,7 +62,7 @@ function test_roundtrip(d::Distribution)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
     # generate random parameters across the support
     @testset "roundtrip: $(_name(d))" begin
-        for _ in 1:1000
+        for _ = 1:1000
             @testset let x = rand(d), d = d
                 ffwd = to_vec(d)
                 frvs = from_vec(d)
@@ -65,7 +71,7 @@ function test_roundtrip(d::Distribution)
         end
     end
     @testset "roundtrip (linked): $(_name(d))" begin
-        for _ in 1:1000
+        for _ = 1:1000
             @testset let x = rand(d), d = d
                 ffwd = to_linked_vec(d)
                 frvs = from_linked_vec(d)
@@ -80,7 +86,7 @@ function test_roundtrip_inverse(d::Distribution)
     # generate random parameters across the support
     @testset "roundtrip inverse: $(_name(d))" begin
         len = vec_length(d)
-        for _ in 1:100
+        for _ = 1:100
             @testset let y = randn(len), d = d
                 frvs = from_vec(d)
                 ffwd = to_vec(d)
@@ -90,7 +96,7 @@ function test_roundtrip_inverse(d::Distribution)
     end
     @testset "roundtrip inverse (linked): $(_name(d))" begin
         len = linked_vec_length(d)
-        for _ in 1:100
+        for _ = 1:100
             @testset let y = randn(len), d = d
                 ffwd = to_linked_vec(d)
                 frvs = from_linked_vec(d)
@@ -128,7 +134,7 @@ end
 
 function test_vec_lengths(d::Distribution)
     @testset "vector lengths: $(_name(d))" begin
-        for _ in 1:10
+        for _ = 1:10
             @testset let x = rand(d), d = d
                 y = to_vec(d)(x)
                 @test length(y) == vec_length(d)
@@ -136,7 +142,7 @@ function test_vec_lengths(d::Distribution)
         end
     end
     @testset "vector lengths (linked): $(_name(d))" begin
-        for _ in 1:10
+        for _ = 1:10
             @testset let x = rand(d), d = d
                 y = to_linked_vec(d)(x)
                 @test length(y) == linked_vec_length(d)
@@ -168,10 +174,10 @@ function test_allocations(d::Distribution)
     end
 end
 
-function test_logjac(d::Distribution; atol=1e-12)
+function test_logjac(d::Distribution; atol = 1e-12)
     # Vectorisation logjacs should be zero because they are just reshapes.
     @testset "logjac: $(_name(d))" begin
-        for _ in 1:100
+        for _ = 1:100
             @testset let x = rand(d), d = d
                 ffwd = to_vec(d)
                 @test iszero(last(with_logabsdet_jacobian(ffwd, x)))
@@ -189,7 +195,7 @@ function test_logjac(d::Distribution; atol=1e-12)
     # TODO: generalising this to the case where xvec and ffwd(xvec) have different
     # dimensions is tricky as we learnt with LKJChol!
     @testset "logjac (linked): $(_name(d))" begin
-        for _ in 1:100
+        for _ = 1:100
             x = _rand_safe_ad(d)
             @testset let x = x, d = d
                 xvec = to_vec(d)(x)
@@ -210,7 +216,7 @@ function test_logjac(d::Distribution; atol=1e-12)
     end
 end
 
-function test_ad(d::Distribution, adtypes::Vector{<:AbstractADType}; atol=1e-12)
+function test_ad(d::Distribution, adtypes::Vector{<:AbstractADType}; atol = 1e-12)
     # Test that AD backends can differentiate the conversions to and from vector
     # and linked vector forms.
     @testset "AD forward: $(_name(d))" begin

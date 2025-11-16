@@ -60,7 +60,7 @@ for dist_type in [
     D.Rayleigh,
     D.Rician,
     D.StudentizedRange,
-    D.Weibull
+    D.Weibull,
 ]
     @eval begin
         VectorBijectors.from_linked_vec(d::$dist_type) = ExpOnly(minimum(d))
