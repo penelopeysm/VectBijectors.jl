@@ -2,8 +2,46 @@
 
 A lightweight reimplementation of Bijectors.jl's functionality, but specifically focused on transformations to and from vectors.
 
-In particular, it guarantees that for any distribution `d`, `to_linked_vec(d)` is a vector.
-This is not always true in Bijectors.jl.
+It assumes that there are three forms of samples from a distribution `d` that we are interested in:
 
-This is intended primarily for use with probabilistic programming, e.g. DynamicPPL.jl.
+1. **The original form**, which is what `rand(d)` returns.
+2. **A vectorised form**, which is a vector that contains a flattened version of the original form.
+3. **A linked vectorised form**, which is a vector in which:
+   - each element is independent; and
+   - each element is unconstrained (can take any value in ℝ).
+
+Note that because of the independence requirement, the linked vectorised form may have a different dimension to the vectorised form.
+For example, when sampling from a `Dirichlet` distribution, the original form is a vector that always sums to 1.
+The linked vectorised form will have one element less than the original form, because this constraint is eliminated.
+
+VectorBijectors.jl provides functionality to convert between these three forms, via the following functions.
+Assuming that `x = rand(d)` for some distribution `d`:
+
+- `to_vec(d)` is a function which converts `x` to the vectorised form
+- `from_vec(d)` is the inverse of `to_vec(d)`
+- `vec_length(d)` returns the length of `to_vec(d)(x)`
+- `to_linked_vec(d)` is a function which converts `x` to the linked vectorised form
+- `from_linked_vec(d)` is the inverse of `to_linked_vec(d)`
+- `linked_vec_length(d)` returns the length of `to_linked_vec(d)(x)`
+
+For example:
+
+```julia
+julia> using VectorBijectors, Distributions
+
+julia> d = Beta(2, 2); x = rand(d)  # x is between 0 and 1
+0.5602086057097567
+
+julia> to_vec(d)(x)
+1-element Vector{Float64}:
+ 0.5602086057097567
+
+julia> to_linked_vec(d)(x)
+1-element Vector{Float64}:
+ 0.24200871395677753
+```
+
+Bijectors.jl contains very similar functionality, but it does not guarantee that `Bijectors.bijector(d)(x)` will always return a vector (in general it can be a scalar or an array).
+
+This package is intended primarily for use with probabilistic programming, e.g. DynamicPPL.jl, where vectorised samples are required to satisfy the LogDensityProblems.jl interface.
 Note that Bijectors.jl is a more general package that contains far more functionality than this.
