@@ -1,5 +1,6 @@
 module VBUnivariateTests
 
+using Chairmarks
 using Distributions
 using VectBijectors
 using Test
@@ -10,7 +11,10 @@ dists = [
     BetaPrime(1, 2), # pos
     Biweight(1, 2),
     Cauchy(-2, 1), # iden
-    Chernoff(), # iden
+    # sampling from Chernoff errors randomly:
+    # https://github.com/JuliaStats/Distributions.jl/issues/1999
+    # https://github.com/JuliaStats/Distributions.jl/pull/2000
+    # Chernoff(), # iden
     Chi(1), # pos
     Chisq(3), # pos
     Cosine(0, 1), # trunc
@@ -63,9 +67,21 @@ dists = [
 ]
 
 @testset "Univariate distributions" begin
-    @testset "typeof(d)" for d in dists
+    @testset "$(typeof(d))" for d in dists
+        @info "Univariate: $(typeof(d))"
+
         VectBijectors.TestUtils.test_roundtrip(d)
         VectBijectors.TestUtils.test_type_stability(d)
+
+        @testset "no allocations on from_vec" begin
+            x = rand(d)
+            yvec = to_linked_vec(d)(x)
+            bmark = median(@be from_linked_vec($d)($yvec))
+            @test bmark.allocs == 0
+            yvec = to_vec(d)(x)
+            bmark = median(@be from_vec($d)($yvec))
+            @test bmark.allocs == 0
+        end
     end
 end
 
