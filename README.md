@@ -41,7 +41,11 @@ julia> to_linked_vec(d)(x)
  0.24200871395677753
 ```
 
-Bijectors.jl contains very similar functionality, but it does not guarantee that `Bijectors.bijector(d)(x)` will always return a vector (in general it can be a scalar or an array).
+## Why not Bijectors?
 
 This package is intended primarily for use with probabilistic programming, e.g. DynamicPPL.jl, where vectorised samples are required to satisfy the LogDensityProblems.jl interface.
 Note that Bijectors.jl is a more general package that contains far more functionality than this.
+
+Bijectors.jl does indeed contain very similar functionality, but it does not guarantee that `Bijectors.bijector(d)(x)` will always return a vector (in general it can be a scalar or an array).
+Thus, there is often extra overhead introduced when converting to and from vectorised forms.
+See e.g. https://github.com/TuringLang/DynamicPPL.jl/issues/1142.
