@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || github.ref == 'refs/heads/main' }}
 
 jobs:
-  test:
+  test-VB:
     runs-on: ${{ matrix.runner.os }}
     strategy:
       fail-fast: false
