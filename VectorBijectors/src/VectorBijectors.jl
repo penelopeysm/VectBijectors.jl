@@ -14,6 +14,7 @@ include("univariate/truncated.jl")
 
 include("multivariate/multivariate.jl")
 include("multivariate/identities.jl")
+include("multivariate/simplex.jl")
 
 export from_vec
 export to_vec

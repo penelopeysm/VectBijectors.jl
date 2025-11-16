@@ -10,7 +10,8 @@ a sensible result (i.e. a Float64) even if `x` is not a numeric vector.
 """
 struct TypedIdentity end
 (::TypedIdentity)(@nospecialize(x)) = x
-with_logabsdet_jacobian(::TypedIdentity, x::AbstractArray{T}) where {T<:Number} = (x, zero(T))
+with_logabsdet_jacobian(::TypedIdentity, x::AbstractArray{T}) where {T<:Number} =
+    (x, zero(T))
 with_logabsdet_jacobian(::TypedIdentity, x::T) where {T<:Number} = (x, zero(T))
 with_logabsdet_jacobian(::TypedIdentity, x) = (x, zero(Float64))
 inverse(x::TypedIdentity) = x
