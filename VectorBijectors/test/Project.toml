@@ -1,4 +1,5 @@
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-VectBijectors = "8f4f62c7-8ad6-4a10-ba5f-dd81de6324a2"
+VectorBijectors = "8f4f62c7-8ad6-4a10-ba5f-dd81de6324a2"

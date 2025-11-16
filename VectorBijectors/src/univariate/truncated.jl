@@ -102,5 +102,5 @@ end
 inverse(u::UntruncateVect) = TruncateOnly(u.lower, u.upper)
 
 # This is the fallback option for all other univariate continuous distributions.
-VectBijectors.to_linked_vec(d::D.ContinuousUnivariateDistribution) = UntruncateVect(minimum(d), maximum(d))
-VectBijectors.from_linked_vec(d::D.ContinuousUnivariateDistribution) = TruncateOnly(minimum(d), maximum(d))
+VectorBijectors.to_linked_vec(d::D.ContinuousUnivariateDistribution) = UntruncateVect(minimum(d), maximum(d))
+VectorBijectors.from_linked_vec(d::D.ContinuousUnivariateDistribution) = TruncateOnly(minimum(d), maximum(d))

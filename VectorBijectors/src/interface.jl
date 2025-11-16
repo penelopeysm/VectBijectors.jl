@@ -1,5 +1,5 @@
 """
-    VectBijectors.from_vec(d::Distribution)
+    VectorBijectors.from_vec(d::Distribution)
 
 Returns a function that can be used to convert a vectorised sample from `d` back to its
 original form.
@@ -7,14 +7,14 @@ original form.
 function from_vec end
 
 """
-    VectBijectors.to_vec(d::Distribution)
+    VectorBijectors.to_vec(d::Distribution)
 
 Returns a function that can be used to vectorise a sample from `d`.
 """
 function to_vec end
 
 """
-    VectBijectors.from_linked_vec(d::Distribution)
+    VectorBijectors.from_linked_vec(d::Distribution)
 
 Returns a function that can be used to convert an unconstrained vector back to a sample from
 `d`.
@@ -22,14 +22,14 @@ Returns a function that can be used to convert an unconstrained vector back to a
 function from_linked_vec end
 
 """
-    VectBijectors.to_linked_vec(d::Distribution)
+    VectorBijectors.to_linked_vec(d::Distribution)
 
 Returns a function that can be used to convert a sample from `d` to an unconstrained vector.
 """
 function to_linked_vec end
 
 """
-    VectBijectors.vec_length(d::Distribution)
+    VectorBijectors.vec_length(d::Distribution)
 
 Returns the length of the vector representation of a sample from `d`, i.e.,
 `length(to_vec(d)(rand(d)))`. However, it does this without actually drawing a sample.
@@ -37,7 +37,7 @@ Returns the length of the vector representation of a sample from `d`, i.e.,
 function vec_length end
 
 """
-    VectBijectors.linked_vec_length(d::Distribution)
+    VectorBijectors.linked_vec_length(d::Distribution)
 
 Returns the length of the unconstrained vector representation of a sample from `d`, i.e.,
 `length(to_linked_vec(d)(rand(d)))`. However, it does this without actually drawing a

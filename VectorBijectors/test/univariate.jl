@@ -1,8 +1,8 @@
 module VBUnivariateTests
 
 using Distributions
-using VectBijectors
 using Test
+using VectorBijectorsTest
 
 dists = [
     Arcsine(0, 1), # trunc
@@ -67,7 +67,7 @@ dists = [
 
 @testset "Univariates" begin
     for d in dists
-        VectBijectors.TestUtils.test_all(d)
+        VectorBijectorsTest.test_all(d)
     end
 end
 

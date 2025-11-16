@@ -63,7 +63,7 @@ for dist_type in [
     D.Weibull
 ]
     @eval begin
-        VectBijectors.from_linked_vec(d::$dist_type) = ExpOnly(minimum(d))
-        VectBijectors.to_linked_vec(d::$dist_type) = LogVect(minimum(d))
+        VectorBijectors.from_linked_vec(d::$dist_type) = ExpOnly(minimum(d))
+        VectorBijectors.to_linked_vec(d::$dist_type) = LogVect(minimum(d))
     end
 end

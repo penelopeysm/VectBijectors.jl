@@ -1,4 +1,4 @@
-name = "VectBijectors"
+name = "VectorBijectors"
 uuid = "8f4f62c7-8ad6-4a10-ba5f-dd81de6324a2"
 authors = ["Penelope Yong <penelopeysm@gmail.com>"]
 version = "0.1.0"
@@ -8,19 +8,10 @@ ChangesOfVariables = "9e997f8a-9a97-42d5-a9f1-ce6bfc15e2c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
 LogExpFunctions = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
-StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-
-[extensions]
-VectBijectorsTestExt = ["Test", "Distributions"]
-
-[weakdeps]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 ChangesOfVariables = "0.1.10"
 Distributions = "0.25.122"
 InverseFunctions = "0.1.17"
 LogExpFunctions = "0.3.29"
-StatsFuns = "1.5.2"
-Test = "1"
 julia = "1.10.8"

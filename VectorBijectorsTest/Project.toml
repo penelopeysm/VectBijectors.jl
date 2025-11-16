@@ -1,0 +1,16 @@
+name = "VectorBijectorsTest"
+uuid = "5b3bcb54-8207-46b2-8895-8bbf15b6d072"
+authors = ["Penelope Yong <penelopeysm@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+VectorBijectors = "8f4f62c7-8ad6-4a10-ba5f-dd81de6324a2"
+
+[compat]
+Distributions = "0.25.122"
+Test = "1"
+
+[sources]
+VectorBijectors = { path = "../VectorBijectors" }

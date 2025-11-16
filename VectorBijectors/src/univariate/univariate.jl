@@ -27,13 +27,13 @@ with_logabsdet_jacobian(::Vect, x) = ([x], zero(Float64))
 inverse(::Vect) = Only()
 
 # For all univariate distributions, from_vec and to_vec are simple
-VectBijectors.from_vec(::D.UnivariateDistribution) = Only()
-VectBijectors.to_vec(::D.UnivariateDistribution) = Vect()
+VectorBijectors.from_vec(::D.UnivariateDistribution) = Only()
+VectorBijectors.to_vec(::D.UnivariateDistribution) = Vect()
 
 # For discrete univariate distributions, we really can't transform the 'support'
-VectBijectors.from_linked_vec(::D.DiscreteUnivariateDistribution) = Only()
-VectBijectors.to_linked_vec(::D.DiscreteUnivariateDistribution) = Vect()
+VectorBijectors.from_linked_vec(::D.DiscreteUnivariateDistribution) = Only()
+VectorBijectors.to_linked_vec(::D.DiscreteUnivariateDistribution) = Vect()
 
 # vect_length and linked_vec_length are trivial
-VectBijectors.vec_length(::D.UnivariateDistribution) = 1
-VectBijectors.linked_vec_length(::D.UnivariateDistribution) = 1
+VectorBijectors.vec_length(::D.UnivariateDistribution) = 1
+VectorBijectors.linked_vec_length(::D.UnivariateDistribution) = 1

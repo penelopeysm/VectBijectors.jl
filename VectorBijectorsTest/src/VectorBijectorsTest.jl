@@ -1,22 +1,22 @@
-module VectBijectorsTestExt
+module VectorBijectorsTest
 
 using Test
-using VectBijectors
+using VectorBijectors
 using Distributions
 
 _name(d::Distribution) = nameof(typeof(d))
 
-function VectBijectors.TestUtils.test_all(d::Distribution)
+function test_all(d::Distribution)
     @info "Testing $(_name(d))"
     @testset "$(_name(d))" begin
-        VectBijectors.TestUtils.test_roundtrip(d)
-        VectBijectors.TestUtils.test_type_stability(d)
-        VectBijectors.TestUtils.test_vec_lengths(d)
-        VectBijectors.TestUtils.test_allocations(d)
+        VectorBijectorsTest.test_roundtrip(d)
+        VectorBijectorsTest.test_type_stability(d)
+        VectorBijectorsTest.test_vec_lengths(d)
+        VectorBijectorsTest.test_allocations(d)
     end
 end
 
-function VectBijectors.TestUtils.test_roundtrip(d::Distribution)
+function test_roundtrip(d::Distribution)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
     # generate random parameters across the support
     @testset "roundtrip: $(_name(d))" begin
@@ -37,7 +37,7 @@ function VectBijectors.TestUtils.test_roundtrip(d::Distribution)
     end
 end
 
-function VectBijectors.TestUtils.test_type_stability(d::Distribution)
+function test_type_stability(d::Distribution)
     x = rand(d)
     @testset "type stability: $(_name(d))" begin
         @inferred to_vec(d)
@@ -59,7 +59,7 @@ function VectBijectors.TestUtils.test_type_stability(d::Distribution)
     end
 end
 
-function VectBijectors.TestUtils.test_vec_lengths(d::Distribution)
+function test_vec_lengths(d::Distribution)
     @testset "vector lengths: $(_name(d))" begin
         for _ in 1:10
             y = to_vec(d)(rand(d))
@@ -74,7 +74,7 @@ function VectBijectors.TestUtils.test_vec_lengths(d::Distribution)
     end
 end
 
-function VectBijectors.TestUtils.test_allocations(d::Distribution)
+function test_allocations(d::Distribution)
     # For univariates, to_vec and to_linked_vec always cause allocations because they have
     # to create a new vector.
     # TODO: Generalise to multivariates etc
@@ -93,4 +93,4 @@ function VectBijectors.TestUtils.test_allocations(d::Distribution)
     end
 end
 
-end # module VectBijectorsTestExt
+end # module VectorBijectorsTest

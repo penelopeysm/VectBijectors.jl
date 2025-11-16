@@ -16,7 +16,7 @@ for dist_type in [
     D.TDist
 ]
     @eval begin
-        VectBijectors.from_linked_vec(::$dist_type) = Only()
-        VectBijectors.to_linked_vec(::$dist_type) = Vect()
+        VectorBijectors.from_linked_vec(::$dist_type) = Only()
+        VectorBijectors.to_linked_vec(::$dist_type) = Vect()
     end
 end
