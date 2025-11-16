@@ -1,8 +1,15 @@
 module VectorBijectorsTest
 
+using ADTypes
 using Test
 using VectorBijectors
 using Distributions
+using LinearAlgebra: logabsdet
+import DifferentiationInterface as DI
+import ForwardDiff
+
+# TODO: Would like to use FiniteDifferences, but very easy to run into issues with https://juliadiff.org/FiniteDifferences.jl/latest/#Dealing-with-Singularities
+const ref_adtype = AutoForwardDiff()
 
 _name(d::Distribution) = nameof(typeof(d))
 
@@ -14,6 +21,7 @@ function test_all(d::Distribution)
         VectorBijectorsTest.test_type_stability(d)
         VectorBijectorsTest.test_vec_lengths(d)
         VectorBijectorsTest.test_allocations(d)
+        VectorBijectorsTest.test_logjac(d)
     end
 end
 
@@ -114,6 +122,37 @@ function test_allocations(d::Distribution)
         frvs = from_linked_vec(d)
         frvs(yvec)
         @test (@allocations frvs(yvec)) == 0
+    end
+end
+
+function test_logjac(d::Distribution)
+    # Vectorisation logjacs should be zero because they are just reshapes.
+    @testset "logjac: $(_name(d))" begin
+        for _ in 1:100
+            x = rand(d)
+            ffwd = to_vec(d)
+            @test iszero(last(with_logabsdet_jacobian(ffwd, x)))
+            y = ffwd(x)
+            frvs = from_vec(d)
+            @test iszero(last(with_logabsdet_jacobian(frvs, y)))
+        end
+    end
+
+    # Link logjacs will not be zero, so we need to check against finite differences Because
+    # Jacobians need to map from vector to vector, here we test the transformation of the
+    # vectorised form to the linked vectorised form via the original sample.
+    #
+    # TODO: generalising this to the case where xvec and ffwd(xvec) have different
+    # dimensions is tricky as we learnt with LKJChol!
+    @testset "logjac (linked): $(_name(d))" begin
+        for _ in 1:100
+            xvec = to_vec(d)(rand(d))
+            ffwd = to_linked_vec(d) ∘ from_vec(d)
+            vbt_logjac = last(with_logabsdet_jacobian(ffwd, xvec))
+            ad_logjac = first(logabsdet(DI.jacobian(ffwd, ref_adtype, xvec)))
+            # atol might need to be adjusted depending on random seeds etc
+            @test vbt_logjac ≈ ad_logjac atol=1e-11
+        end
     end
 end
 
