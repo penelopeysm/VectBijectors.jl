@@ -50,6 +50,7 @@ function with_logabsdet_jacobian(t::TruncateOnly, y::AbstractVector{T}) where {T
         yi = y[]
         exp(yi) + t.lower, yi
     elseif ubounded
+        yi = y[]
         t.upper - exp(yi), yi
     else
         y[], zero(T)

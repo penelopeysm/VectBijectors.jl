@@ -19,7 +19,23 @@ const default_adtypes = [
     AutoMooncakeForward(),
 ]
 
+# Pretty-printing distributions. Otherwise things like MvNormal are super ugly.
 _name(d::Distribution) = nameof(typeof(d))
+_name(d::Distributions.Censored) = "censored $(_name(d.uncensored)) [$(d.lower),$(d.upper)]"
+_name(d::Distributions.Truncated) = "truncated $(_name(d.untruncated)) [$(d.lower),$(d.upper)]"
+
+# AD will give nonsense results at the limits of censored distributions (since the gradient
+# is not well-defined), so we avoid generating samples that are exactly at the limits.
+_rand_safe_ad(d::Distribution) = rand(d)
+_rand_safe_ad(d::Distributions.Censored) = begin
+    a, b = d.lower, d.upper
+    while true
+        x = rand(d)
+        if x != a && x != b
+            return x
+        end
+    end
+end
 
 function test_all(d::Distribution; adtypes=default_adtypes, ad_atol=1e-12, test_allocs=true)
     @info "Testing $(_name(d))"
@@ -41,18 +57,20 @@ function test_roundtrip(d::Distribution)
     # generate random parameters across the support
     @testset "roundtrip: $(_name(d))" begin
         for _ in 1:1000
-            x = rand(d)
-            ffwd = to_vec(d)
-            frvs = from_vec(d)
-            @test x ≈ frvs(ffwd(x))
+            @testset let x = rand(d), d = d
+                ffwd = to_vec(d)
+                frvs = from_vec(d)
+                @test x ≈ frvs(ffwd(x))
+            end
         end
     end
     @testset "roundtrip (linked): $(_name(d))" begin
         for _ in 1:1000
-            x = rand(d)
-            ffwd = to_linked_vec(d)
-            frvs = from_linked_vec(d)
-            @test x ≈ frvs(ffwd(x))
+            @testset let x = rand(d), d = d
+                ffwd = to_linked_vec(d)
+                frvs = from_linked_vec(d)
+                @test x ≈ frvs(ffwd(x))
+            end
         end
     end
 end
@@ -63,19 +81,21 @@ function test_roundtrip_inverse(d::Distribution)
     @testset "roundtrip inverse: $(_name(d))" begin
         len = vec_length(d)
         for _ in 1:100
-            y = randn(len)
-            frvs = from_vec(d)
-            ffwd = to_vec(d)
-            @test y ≈ ffwd(frvs(y))
+            @testset let y = randn(len), d = d
+                frvs = from_vec(d)
+                ffwd = to_vec(d)
+                @test y ≈ ffwd(frvs(y))
+            end
         end
     end
     @testset "roundtrip inverse (linked): $(_name(d))" begin
         len = linked_vec_length(d)
         for _ in 1:100
-            y = randn(len)
-            ffwd = to_linked_vec(d)
-            frvs = from_linked_vec(d)
-            @test y ≈ ffwd(frvs(y))
+            @testset let y = randn(len), d = d
+                ffwd = to_linked_vec(d)
+                frvs = from_linked_vec(d)
+                @test y ≈ ffwd(frvs(y))
+            end
         end
     end
 end
@@ -83,36 +103,44 @@ end
 function test_type_stability(d::Distribution)
     x = rand(d)
     @testset "type stability: $(_name(d))" begin
-        @inferred to_vec(d)
-        @inferred from_vec(d)
-        ffwd = to_vec(d)
-        frvs = from_vec(d)
-        @inferred ffwd(x)
-        y = ffwd(x)
-        @inferred frvs(y)
+        @testset let x = x, d = d
+            @inferred to_vec(d)
+            @inferred from_vec(d)
+            ffwd = to_vec(d)
+            frvs = from_vec(d)
+            @inferred ffwd(x)
+            y = ffwd(x)
+            @inferred frvs(y)
+        end
     end
     @testset "type stability (linked): $(_name(d))" begin
-        @inferred to_linked_vec(d)
-        @inferred from_linked_vec(d)
-        ffwd = to_linked_vec(d)
-        frvs = from_linked_vec(d)
-        @inferred ffwd(x)
-        y = ffwd(x)
-        @inferred frvs(y)
+        @testset let x = x, d = d
+            @inferred to_linked_vec(d)
+            @inferred from_linked_vec(d)
+            ffwd = to_linked_vec(d)
+            frvs = from_linked_vec(d)
+            @inferred ffwd(x)
+            y = ffwd(x)
+            @inferred frvs(y)
+        end
     end
 end
 
 function test_vec_lengths(d::Distribution)
     @testset "vector lengths: $(_name(d))" begin
         for _ in 1:10
-            y = to_vec(d)(rand(d))
-            @test length(y) == vec_length(d)
+            @testset let x = rand(d), d = d
+                y = to_vec(d)(x)
+                @test length(y) == vec_length(d)
+            end
         end
     end
     @testset "vector lengths (linked): $(_name(d))" begin
         for _ in 1:10
-            y = to_linked_vec(d)(rand(d))
-            @test length(y) == linked_vec_length(d)
+            @testset let x = rand(d), d = d
+                y = to_linked_vec(d)(x)
+                @test length(y) == linked_vec_length(d)
+            end
         end
     end
 end
@@ -123,16 +151,20 @@ function test_allocations(d::Distribution)
     # TODO: Generalise to multivariates etc
     x = rand(d)
     @testset "allocations: $(_name(d))" begin
-        yvec = to_vec(d)(x)
-        frvs = from_vec(d)
-        frvs(yvec)
-        @test (@allocations frvs(yvec)) == 0
+        @testset let x = x, d = d
+            yvec = to_vec(d)(x)
+            frvs = from_vec(d)
+            frvs(yvec)
+            @test (@allocations frvs(yvec)) == 0
+        end
     end
     @testset "allocations (linked): $(_name(d))" begin
-        yvec = to_linked_vec(d)(x)
-        frvs = from_linked_vec(d)
-        frvs(yvec)
-        @test (@allocations frvs(yvec)) == 0
+        @testset let x = x, d = d
+            yvec = to_linked_vec(d)(x)
+            frvs = from_linked_vec(d)
+            frvs(yvec)
+            @test (@allocations frvs(yvec)) == 0
+        end
     end
 end
 
@@ -140,16 +172,17 @@ function test_logjac(d::Distribution; atol=1e-12)
     # Vectorisation logjacs should be zero because they are just reshapes.
     @testset "logjac: $(_name(d))" begin
         for _ in 1:100
-            x = rand(d)
-            ffwd = to_vec(d)
-            @test iszero(last(with_logabsdet_jacobian(ffwd, x)))
-            y = ffwd(x)
-            frvs = from_vec(d)
-            @test iszero(last(with_logabsdet_jacobian(frvs, y)))
+            @testset let x = rand(d), d = d
+                ffwd = to_vec(d)
+                @test iszero(last(with_logabsdet_jacobian(ffwd, x)))
+                y = ffwd(x)
+                frvs = from_vec(d)
+                @test iszero(last(with_logabsdet_jacobian(frvs, y)))
+            end
         end
     end
 
-    # Link logjacs will not be zero, so we need to check against finite differences Because
+    # Link logjacs will not be zero, so we need to check against a chosen backend. Because
     # Jacobians need to map from vector to vector, here we test the transformation of the
     # vectorised form to the linked vectorised form via the original sample.
     #
@@ -157,17 +190,22 @@ function test_logjac(d::Distribution; atol=1e-12)
     # dimensions is tricky as we learnt with LKJChol!
     @testset "logjac (linked): $(_name(d))" begin
         for _ in 1:100
-            xvec = to_vec(d)(rand(d))
-            ffwd = to_linked_vec(d) ∘ from_vec(d)
-            vbt_logjac = last(with_logabsdet_jacobian(ffwd, xvec))
-            ad_logjac = first(logabsdet(DI.jacobian(ffwd, ref_adtype, xvec)))
-            @test vbt_logjac ≈ ad_logjac atol = atol
+            x = _rand_safe_ad(d)
+            @testset let x = x, d = d
+                xvec = to_vec(d)(x)
+                ffwd = to_linked_vec(d) ∘ from_vec(d)
+                vbt_logjac = last(with_logabsdet_jacobian(ffwd, xvec))
+                ad_logjac = first(logabsdet(DI.jacobian(ffwd, ref_adtype, xvec)))
+                @test vbt_logjac ≈ ad_logjac atol = atol
+            end
 
-            yvec = to_linked_vec(d)(rand(d))
-            frvs = to_vec(d) ∘ from_linked_vec(d)
-            vbt_logjac = last(with_logabsdet_jacobian(frvs, yvec))
-            ad_logjac = first(logabsdet(DI.jacobian(frvs, ref_adtype, yvec)))
-            @test vbt_logjac ≈ ad_logjac atol = atol
+            @testset let x = x, d = d
+                yvec = to_linked_vec(d)(x)
+                frvs = to_vec(d) ∘ from_linked_vec(d)
+                vbt_logjac = last(with_logabsdet_jacobian(frvs, yvec))
+                ad_logjac = first(logabsdet(DI.jacobian(frvs, ref_adtype, yvec)))
+                @test vbt_logjac ≈ ad_logjac atol = atol
+            end
         end
     end
 end
@@ -176,21 +214,27 @@ function test_ad(d::Distribution, adtypes::Vector{<:AbstractADType}; atol=1e-12)
     # Test that AD backends can differentiate the conversions to and from vector
     # and linked vector forms.
     @testset "AD forward: $(_name(d))" begin
-        xvec = to_vec(d)(rand(d))
+        x = _rand_safe_ad(d)
+        xvec = to_vec(d)(x)
         ffwd = to_linked_vec(d) ∘ from_vec(d)
         ref_jac = DI.jacobian(ffwd, ref_adtype, xvec)
-        @testset "$adtype" for adtype in adtypes
-            ad_jac = DI.jacobian(ffwd, adtype, xvec)
-            @test ref_jac ≈ ad_jac atol = atol
+        for adtype in adtypes
+            @testset let x = x, adtype = adtype, d = d
+                ad_jac = DI.jacobian(ffwd, adtype, xvec)
+                @test ref_jac ≈ ad_jac atol = atol
+            end
         end
     end
     @testset "AD reverse: $(_name(d))" begin
-        yvec = to_linked_vec(d)(rand(d))
+        x = _rand_safe_ad(d)
+        yvec = to_linked_vec(d)(x)
         frvs = to_vec(d) ∘ from_linked_vec(d)
         ref_jac = DI.jacobian(frvs, ref_adtype, yvec)
-        @testset "$adtype" for adtype in adtypes
-            ad_jac = DI.jacobian(frvs, adtype, yvec)
-            @test ref_jac ≈ ad_jac atol = atol
+        for adtype in adtypes
+            @testset let x = x, adtype = adtype, d = d
+                ad_jac = DI.jacobian(frvs, adtype, yvec)
+                @test ref_jac ≈ ad_jac atol = atol
+            end
         end
     end
 end
