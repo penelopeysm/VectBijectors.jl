@@ -52,36 +52,64 @@ function with_logabsdet_jacobian(::SimplexInvlink, y::AbstractVector{T}) where {
     z = exp.(z .- max_val) ./ d
     logjac = -((N + 1) * (max_val + log(d))) + (0.5 * log(N + 1))
     return z, logjac
+    # Note that with_logabsdet_jacobian is THE most important function to benchmark.
+    # That's because DynamicPPL only really uses this. It will never actually call
+    # the plain invlink function. So it doesn't matter if that is slower.
+    #
     # VectorBijectors (this function):
     #
-    # julia> @be vb_inv($vb_y)
-    # Benchmark: 2950 samples with 245 evaluations
-    #  min    104.592 ns (5 allocs: 224 bytes)
-    #  median 106.633 ns (5 allocs: 224 bytes)
-    #  mean   128.849 ns (5 allocs: 224 bytes, 0.23% gc time)
-    #  max    16.186 μs (5 allocs: 224 bytes, 98.42% gc time)
+    # julia> @be with_logabsdet_jacobian($vb_inv, $vb_y)
+    # Benchmark: 2685 samples with 296 evaluations
+    #  min    95.297 ns (5 allocs: 224 bytes)
+    #  median 97.551 ns (5 allocs: 224 bytes)
+    #  mean   117.527 ns (5 allocs: 224 bytes, 0.22% gc time)
+    #  max    13.497 μs (5 allocs: 224 bytes, 98.63% gc time)
     #
     # Bijectors (b_inv = inverse(bijector(dist))):
     #
-    # julia> @be $b_inv($y)
-    # Benchmark: 2809 samples with 368 evaluations
-    #  min    75.519 ns (2 allocs: 96 bytes)
-    #  median 84.353 ns (2 allocs: 96 bytes)
-    #  mean   91.699 ns (2 allocs: 96 bytes, 0.17% gc time)
-    #  max    9.486 μs (2 allocs: 96 bytes, 98.36% gc time)
-    #
-    # So not THAT much difference, but Bijectors is still faster.
+    # julia> @be with_logabsdet_jacobian($b_inv, $y)
+    # Benchmark: 3045 samples with 213 evaluations
+    #  min    132.235 ns (2 allocs: 96 bytes)
+    #  median 133.803 ns (2 allocs: 96 bytes)
+    #  mean   144.958 ns (2 allocs: 96 bytes, 0.06% gc time)
+    #  max    16.320 μs (2 allocs: 96 bytes, 98.41% gc time)
 end
 inverse(::SimplexInvlink) = SimplexLink()
 
 struct SimplexLink end
-function (::SimplexLink)(x::AbstractVector{T}) where {T<:Real}
-    # TODO: optimise
-    return (_sum_to_zero_transform ∘ _inverse_softmax)(x)
+function (s::SimplexLink)(x::AbstractVector{T}) where {T<:Real}
+    return first(with_logabsdet_jacobian(s, x))
 end
-
-function _simplex_invlink_slow(y::AbstractVector{T}) where {T<:Real}
-    return _softmax(_sum_to_zero_inverse_transform(y))
+function with_logabsdet_jacobian(::SimplexLink, x::AbstractVector{T}) where {T<:Real}
+    # Likewise, a line-by-line translation of Stan code:
+    # https://github.com/stan-dev/math/blob/b82d68ced2e73c8188f3bbf287c1321033103986/stan/math/prim/constraint/simplex_free.hpp#L15-L29
+    Km1 = length(x) - 1
+    y = similar(x, Km1)
+    cumsum = zero(T)
+    for i = 1:Km1
+        cumsum += log(x[i])
+        y[i] = (cumsum - i * log(x[i + 1])) / sqrt(i * (i + 1))
+    end
+    # TODO: zero logjac is not correct, Stan doesn't bother computing it I think because it
+    # doesn't need it...
+    return y, 0.0
+    # VectorBijectors (this function):
+    #
+    # julia> @be $vb($x)
+    # Benchmark: 2988 samples with 506 evaluations
+    #  min    53.854 ns (2 allocs: 96 bytes)
+    #  median 54.842 ns (2 allocs: 96 bytes)
+    #  mean   62.439 ns (2 allocs: 96 bytes, 0.19% gc time)
+    #  max    7.212 μs (2 allocs: 96 bytes, 98.51% gc time)
+    #
+    # Bijectors (b = bijector(dist)):
+    #
+    # julia> @be $b($x)
+    # Benchmark: 4905 samples with 282 evaluations
+    #  min    55.851 ns (2 allocs: 96 bytes)
+    #  median 57.181 ns (2 allocs: 96 bytes)
+    #  mean   65.129 ns (2 allocs: 96 bytes, 0.12% gc time)
+    #  max    11.863 μs (2 allocs: 96 bytes, 98.53% gc time)
 end
 
 # converts an unconstrained vector of length N to a sum-to-zero vector of length N+1
@@ -129,6 +157,6 @@ function _inverse_softmax(y::AbstractVector{T}) where {T<:Real}
     return z
 end
 
-to_linked_vec(::D.Dirichlet) = (_sum_to_zero_transform ∘ _inverse_softmax)
+to_linked_vec(::D.Dirichlet) = SimplexLink()
 from_linked_vec(::D.Dirichlet) = SimplexInvlink()
 linked_vec_length(d::D.Dirichlet) = length(d) - 1
