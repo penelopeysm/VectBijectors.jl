@@ -41,6 +41,11 @@ julia> to_linked_vec(d)(x)
  0.24200871395677753
 ```
 
+VectorBijectors also implements `ChangesOfVariables.with_logabsdet_jacobian(f, x)`, where `f` is some transform obtained from `to_vec`, `from_vec`, `to_linked_vec`, or `from_linked_vec`.
+
+It also implements `InverseFunctions.inverse(f)`, but this is not tested.
+Use at your own risk (and PRs to add tests for this are welcome!).
+
 ## Why not Bijectors?
 
 This package is intended primarily for use with probabilistic programming, e.g. DynamicPPL.jl, where vectorised samples are required to satisfy the LogDensityProblems.jl interface.
