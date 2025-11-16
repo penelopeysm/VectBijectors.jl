@@ -46,9 +46,14 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.runner.version }}
+          project: ./VectorBijectors
 
       - uses: julia-actions/cache@v2
 
       - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: ./VectorBijectors
 
       - uses: julia-actions/julia-runtest@v1
+        with:
+          project: ./VectorBijectors
